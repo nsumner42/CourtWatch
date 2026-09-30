@@ -94,7 +94,13 @@ from bs4 import BeautifulSoup
 #           there is no healthy date to compare with (Good Friday + Saturday).
 #           The search term and sender name are now placeholders in the script;
 #           the real values live only in courtwatch_config.json.
-__version__ = "2.6.0"
+#   2.7.0 - more GTA courthouses: Richmond Hill, Brampton (both Hurontario
+#           St courthouses), Milton, Burlington and Oshawa. Zoom links added
+#           for Brampton, Milton and Oshawa (OCJ rooms that two sources agree
+#           on, exact room match only); Richmond Hill and Burlington have none.
+#           Their thresholds are first guesses from one day's counts and need
+#           retuning from the log.
+__version__ = "2.7.0"
 
 # ============================== CONFIG ======================================
 
@@ -153,10 +159,27 @@ COURT_OFFICE_VALUE = "Toronto"   # "--- All Below ---" = all 3 Toronto courthous
 # Newmarket 400: one office (50 Eagle St W, both courts). Measured days were
 #   961 (Tue 2026-09-29) and 633 (Thu 2026-10-01) rows, about 80% of them OCJ.
 #   400 was chosen by the user; retune once more days are logged.
+#
+# The GTA courthouses added in 2.7.0 were measured on ONE day only (Thu
+# 2026-10-01, the day after a court holiday, so possibly busier than usual).
+# Each floor is roughly 40% of that count - a first guess to retune from the log:
+#   Richmond Hill 36 -> 10  (855 Major Mackenzie Dr E; courtrooms A/B and video
+#                            settlement conferences, i.e. mostly Superior Court)
+#   Brampton   1,149 -> 500 ("--- All Below ---" = 7755 Hurontario, the main
+#                            courthouse with both courts, plus 7765 Hurontario)
+#   Milton       339 -> 150 (491 Steeles Ave E, both courts)
+#   Burlington    16 -> 5   (2021 Plains Rd E, Halton provincial offences court;
+#                            small enough that a quiet day may trip it)
+#   Oshawa       456 -> 200 (150 Bond St E, both courts)
 SEARCH_LOCATIONS = [
     {"label": "Toronto", "city": "Toronto", "office": "Toronto", "min_rows_per_day": 1250},
     {"label": "Lindsay", "city": "Lindsay", "office": "K9V6G80", "min_rows_per_day": 15},
     {"label": "Newmarket", "city": "Newmarket", "office": "L3Y6B10", "min_rows_per_day": 400},
+    {"label": "Richmond Hill", "city": "Richmond Hill", "office": "L4B4C60", "min_rows_per_day": 10},
+    {"label": "Brampton", "city": "Brampton", "office": "Brampton", "min_rows_per_day": 500},
+    {"label": "Milton", "city": "Milton", "office": "L9T1Y70", "min_rows_per_day": 150},
+    {"label": "Burlington", "city": "Burlington", "office": "L7R4M30", "min_rows_per_day": 5},
+    {"label": "Oshawa", "city": "Oshawa", "office": "L1G0A20", "min_rows_per_day": 200},
 ]
 
 # Fallback only. The real date for a scrape is read from the results page's own
@@ -191,6 +214,16 @@ COURTHOUSES = {
     # Superior Court rooms are named ("CTRM 401", "CEVCcourtroom 26",
     # "TELECONFERENCE", "Virtual Small Claims 2").
     "50 Eagle St W": "50 Eagle St W - Newmarket",
+    # GTA courthouses added in 2.7.0 (address text as printed on 2026-10-01).
+    # Brampton, Milton and Oshawa each house both courts at one address, like
+    # Newmarket; OCJ rooms print as bare numbers ("307", "9", "V102") and
+    # Superior Court rooms as names ("CRT 208", "COURTROOM 7", "COURTROOM # 202").
+    "855 Major Mackenzie": "855 Major Mackenzie Dr E - Richmond Hill",
+    "7755 Hurontario": "7755 Hurontario St - Brampton",
+    "7765 Hurontario": "7765 Hurontario St - Brampton",
+    "491 Steeles": "491 Steeles Ave E - Milton",
+    "2021 Plains": "2021 Plains Rd E - Burlington",
+    "150 Bond St E": "150 Bond St E - Oshawa",
 }
 
 # Kept as an alias so anything referring to the old name still works.
@@ -358,6 +391,85 @@ NEWMARKET_ZOOM_LINKS = {
     "1000": "https://ca01web.zoom.us/j/66056357113?pwd=U25EaGV5YmgvSURwZ3VLckNwK3o1UT09",
 }
 
+# Brampton (7755 Hurontario St), Milton (491 Steeles Ave E) and Oshawa (150 Bond
+# St E), Ontario Court of Justice only. Gathered 2026-09-30 from
+# morfisher.ca/zoom-links, teleshlawfirm.ca/resources/court-links, the official
+# ontariocourts.ca/ocj/locations pages (brampton, milton, oshawa-durham) and
+# sondhidefence.ca/oshawa-zoom-coordinates. As with Newmarket, every entry is on
+# at least two sources with the same meeting ID AND passcode.
+#
+# Brampton needs care: morfisher lists both a "docket" code and a physical
+# "courtroom", and Telesh lists only the physical courtroom, so where the two
+# differ they disagree (e.g. Telesh's "204" is the official page's "108"). The
+# official page matches the docket code, which is also what ontariocourtdates
+# prints as the room, so keys here are docket codes. Deliberately left out:
+#   101, 304 - the sources give different meetings for them.
+#   206      - only listed as docket 206 sitting in courtroom 102; unclear.
+#   312, 411, 412, 413 - on morfisher only.
+#   7765 Hurontario (rooms H-11/H-12/H-13) - no source.
+# Milton: 9 and 15 are on the official page and morfisher; nothing else agrees.
+# Oshawa: V102 and V108 share one meeting (official page). 103 is left out
+# (the two sources give different passcodes), as are 102, 106 and 404 (one
+# source each or unclear) and B1/B2 (never a room on the docket).
+# Richmond Hill and Burlington: no Zoom links found on two sources.
+BRAMPTON_ZOOM_LINKS = {
+    "103": "https://ca01web.zoom.us/j/64681518446?pwd=VjVsa3Fza2hMTzBkZTVqSTNCaE8xdz09",
+    "104": "https://ca01web.zoom.us/j/67805418119?pwd=Yk1nK0djb01yblRMNGJaN09SRTlVZz09",
+    "105": "https://ca01web.zoom.us/j/68482502470?pwd=THREd0VyQ0VIcVJ0MTNGeXFpNHBMQT09",
+    "106": "https://ca01web.zoom.us/j/61704910693?pwd=TWtKVmxVRGFiaEtZYU04OHg3TGJYdz09",
+    "107": "https://ca01web.zoom.us/j/67136121600?pwd=Q3FtUFFmSTgwa3d2ZjYzdnNZWXhLUT09",
+    "108": "https://ca01web.zoom.us/j/67326141025?pwd=MGFtRk5OYmV5VzFhL3FWQUNBcjRXQT09",
+    "109": "https://ca01web.zoom.us/j/61665674969?pwd=eXlibWVtTCtqdm9OOGIyVmhER3ZzQT09",
+    "110": "https://ca01web.zoom.us/j/61536320302?pwd=L3luNnQ3aDF2OVY5ajhhRGlLc21iUT09",
+    "111": "https://ca01web.zoom.us/j/62823723884?pwd=R3c4OVNNWVBONVFyQ0lIQzR5dHRlQT09",
+    "112": "https://ca01web.zoom.us/j/63546167019?pwd=NzUzeE5Fd1FVRXMwUmZkYkhweHFNQT09",
+    "201": "https://ca01web.zoom.us/j/64337372268?pwd=K0o1amF2VkdVaURoVFcraU1pRVVOQT09",
+    "202": "https://ca01web.zoom.us/j/63589671435?pwd=eFA4NUFoM1JJeUttM0doQTFzSmljQT09",
+    "203": "https://ca01web.zoom.us/j/65893143525?pwd=eHRXSmdaZGU3dnV6Y2VhNjNOODdJUT09",
+    "204": "https://ca01web.zoom.us/j/65938982880?pwd=RlhpKzVwN2pPN3o5bmhZSXlkSnc4QT09",
+    "207": "https://ca01web.zoom.us/j/62730869709?pwd=aEYyanE4UTNSVzQvVlAzUlJGYnM2UT09",
+    "208": "https://ca01web.zoom.us/j/68525605891?pwd=aWpHNmhFS0hZVVZuUnk4VVZJdWl5QT09",
+    "209": "https://ca01web.zoom.us/j/69500625514?pwd=SU5FYytzbEV5UFpjdFRyblVER1NKZz09",
+    "210": "https://ca01web.zoom.us/j/68100568535?pwd=Q2hsbmxHQm1tVUVzMFpJTDU4enNRZz09",
+    "302": "https://ca01web.zoom.us/j/61155228565?pwd=amNNaTB5aTV0R3RySGE0a2xiNHBTUT09",
+    "303": "https://ca01web.zoom.us/j/64971796716?pwd=N1k5MVNYYjZ5WEYrY3NUS0p0V2lvQT09",
+    "306": "https://ca01web.zoom.us/j/68840172766?pwd=M0w2WmpPbzlxTmRFdDJBd3VDZ1FiQT09",
+    "307": "https://ca01web.zoom.us/j/64410129387?pwd=bFZiazcvcnk0cVZTemQwQTlCYmxmZz09",
+    "309": "https://ca01web.zoom.us/j/67808023152?pwd=MzFqZTVsYmh0TmpiQUt6bytRMVBXUT09",
+    "403": "https://ca01web.zoom.us/j/67615536400?pwd=TUtTUU5vWDNVNTBGMk1HQ3RWcklvdz09",
+    "405": "https://ca01web.zoom.us/j/63986734187?pwd=eU1DbHhFOE1GeHdtZXRPdk1nbWNCdz09",
+    "409": "https://ca01web.zoom.us/j/67565833516?pwd=TC9TdCtyN082aEJSUXBzK0E5UzhsQT09",
+    "H9": "https://ca01web.zoom.us/j/68611773374?pwd=c0pYdWhLNFVwUkR1TWhVNzhBM1Z3dz09",
+    "H15": "https://ca01web.zoom.us/j/66167769592?pwd=MUdXdm1Ga3FKL0YyUTRwOGRYUEdEQT09",
+}
+
+MILTON_ZOOM_LINKS = {
+    # Courtroom 9: adult criminal case management, DV, federal and youth (official page)
+    "9": "https://ca01web.zoom.us/j/66755908772?pwd=U2ZCblFuV2RKY0lSWFVqTkdKMzIyUT09",
+    # Courtroom 15 / M15: plea court and JICMC (official page)
+    "15": "https://ca01web.zoom.us/j/62714951146?pwd=Q3hJQUg5K09hblRsMm1GSTIrMExLUT09",
+}
+
+OSHAWA_ZOOM_LINKS = {
+    # Represented matters / Youth (official page)
+    "101": "https://ca01web.zoom.us/j/63345031777?pwd=dGVEbXUwMjZaWS9EWVJjczBCcE9EUT09",
+    "104": "https://ca01web.zoom.us/j/63591857307?pwd=T3hFSllieXBFZmIvUW9OUGRRYkdIZz09",
+    "105": "https://ca01web.zoom.us/j/61501891107?pwd=VW9keTEzcWpzRlFxWU1KRWlyZVMzdz09",
+    # Plea Court
+    "107": "https://ca01web.zoom.us/j/67557792182?pwd=SWEvUWU5YmgwN3ppOXRYc2xRQnpidz09",
+    "108": "https://ca01web.zoom.us/j/69698314908?pwd=VzJYQ3YyL0tWYktKRG8zTVRwdlBZZz09",
+    # Adult criminal case management, Mon-Fri (official page: "V108 / V102")
+    "V102": "https://ca01web.zoom.us/j/69626566709?pwd=akxSd2hFYW0rKzZWQVpCQ1BMV0pCUT09",
+    "V108": "https://ca01web.zoom.us/j/69626566709?pwd=akxSd2hFYW0rKzZWQVpCQ1BMV0pCUT09",
+    "402": "https://ca01web.zoom.us/j/69163561663?pwd=YkFCWDdUdmEzVzczMS8zWThYQWZaQT09",
+    "403": "https://ca01web.zoom.us/j/64593713166?pwd=R2kzc0hMWm42S2IwWHM1OUoxWEtpUT09",
+    "405": "https://ca01web.zoom.us/j/62184723197?pwd=M2hjUjQvaW9mUnlzTFQwenlIYU9wZz09",
+    "406": "https://ca01web.zoom.us/j/67098725169?pwd=S2JOSnhjVXRDdVBBK2g0MzF2Q1kxZz09",
+    "407": "https://ca01web.zoom.us/j/65888204869?pwd=QVNWa1Z6YTVCSjNJVE5DZkpidTRKUT09",
+    "408": "https://ca01web.zoom.us/j/63632594710?pwd=NUF4UHU2bVU2aWc4R3dDZ1U2YzVKQT09",
+    "409": "https://ca01web.zoom.us/j/63299495683?pwd=bzdCRGJZMjFpSWoxSEh3Tk0reDN5UT09",
+}
+
 # Which courtroom dict belongs to which courthouse label (must match the
 # values in COURTHOUSES above exactly).
 ZOOM_LINKS_BY_COURTHOUSE = {
@@ -366,13 +478,17 @@ ZOOM_LINKS_BY_COURTHOUSE = {
     "361 University Ave - Superior Court of Justice": {},  # no known source for these yet
     "440 Kent St W - Lindsay": LINDSAY_ZOOM_LINKS,
     "50 Eagle St W - Newmarket": NEWMARKET_ZOOM_LINKS,
+    "7755 Hurontario St - Brampton": BRAMPTON_ZOOM_LINKS,
+    "491 Steeles Ave E - Milton": MILTON_ZOOM_LINKS,
+    "150 Bond St E - Oshawa": OSHAWA_ZOOM_LINKS,
 }
 
 # Courthouses whose rooms must match exactly (after the normalising below),
 # with no digits-only fallback. Newmarket shares one address between the OCJ
 # and the Superior Court, so "CTRM 202" (a Superior Court room) must not turn
 # into "202" and pick up the OCJ plea court's link.
-EXACT_ROOM_MATCH_ONLY = {"50 Eagle St W - Newmarket"}
+EXACT_ROOM_MATCH_ONLY = {"50 Eagle St W - Newmarket", "7755 Hurontario St - Brampton",
+                         "491 Steeles Ave E - Milton", "150 Bond St E - Oshawa"}
 
 
 def get_zoom_link(courthouse_label: str, room: str):
