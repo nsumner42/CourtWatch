@@ -1,0 +1,26 @@
+# =============================================================================
+#  .gitignore  --  CourtWatch
+#  Keep secrets and personal data OUT of the repo.
+# =============================================================================
+
+# ---- Runtime files (live next to the script on the host). The config holds the
+#      SMTP password, recipients, search term and healthchecks URL; the state and
+#      log files hold real docket rows, names and email addresses.
+courtwatch_config.json
+courtwatch_state.json
+courtwatch_log.txt
+last-run-status.txt
+final_page_dump.html
+*.html
+
+# ---- Version snapshots: git history is the versioning from now on, and the old
+#      snapshots still contain the real search term.
+versions/
+
+# ---- ControlCenter notes (synced separately and uploaded to the portal).
+PROJECT.md
+HISTORY.md
+
+# ---- Python
+__pycache__/
+*.pyc
