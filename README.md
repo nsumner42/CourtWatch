@@ -4,7 +4,8 @@ Watches the Ontario daily court dockets on [ontariocourtdates.ca](https://www.on
 for a name and emails you when it shows up on today's or tomorrow's list. The email includes the
 courtroom's Zoom link (where one is known) and a calendar invite.
 
-It checks Toronto (all three courthouses), Lindsay and Newmarket by default. Court holidays are
+It checks Toronto (all three courthouses), Newmarket, Richmond Hill, Brampton, Milton, Burlington,
+Oshawa and Lindsay by default. Court holidays are
 detected and named in the email instead of being reported as a failure.
 
 ## Requirements
