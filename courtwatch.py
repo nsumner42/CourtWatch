@@ -100,7 +100,11 @@ from bs4 import BeautifulSoup
 #           on, exact room match only); Richmond Hill and Burlington have none.
 #           Their thresholds are first guesses from one day's counts and need
 #           retuning from the log.
-__version__ = "2.7.0"
+#   2.7.1 - floors retuned to roughly 40% of the lowest day seen so far (the
+#           first Thursday/Friday pair, 2026-10-01/02). Friday dockets are
+#           much lighter: Milton's Friday was 146 rows (98 OCJ + 48 SCJ,
+#           verified complete), under its old floor of 150.
+__version__ = "2.7.1"
 
 # ============================== CONFIG ======================================
 
@@ -150,7 +154,18 @@ COURT_OFFICE_VALUE = "Toronto"   # "--- All Below ---" = all 3 Toronto courthous
 # is ~2,000-2,400 rows and a normal Lindsay day ~20-45, two orders of magnitude
 # apart.
 #
-# Toronto 1250: comfortably under a normal day, so it trips only when a day is
+# Since 2.7.1 the rule is: floor ~= 40% of the LOWEST day seen at that location.
+# A broken scrape shows up as 0 rows, or as one court (OCJ or SCJ) or one
+# courthouse dropping out, which is a much bigger fall than a quiet Friday.
+# Lowest days seen (Thu 2026-10-01 / Fri 2026-10-02 unless noted):
+#   Toronto 2,807 / 1,976 -> 800      Newmarket 731 / 452 -> 200
+#   Brampton 1,165 / 1,007 -> 400     Milton 339 / 146 -> 60
+#   Oshawa 477 / 383 -> 150           Richmond Hill 36 / 45 -> 10 (unchanged)
+#   Burlington 16 / 25 -> 5 (unchanged)
+#   Lindsay 15 is unchanged by the user's decision (Thu 256, Fri 79, but some
+#   September days were in the teens).
+#
+# Toronto (pre-2.7.1: 1250): comfortably under a normal day, so it trips only when a day is
 #   genuinely dead (holiday/long weekend) or the scrape broke - both wanted.
 # Lindsay 15: measured days were 44 and 22. Under ~20 would be unusual, so 15
 #   leaves a little headroom. It will still not reliably prove a court was
@@ -162,7 +177,8 @@ COURT_OFFICE_VALUE = "Toronto"   # "--- All Below ---" = all 3 Toronto courthous
 #
 # The GTA courthouses added in 2.7.0 were measured on ONE day only (Thu
 # 2026-10-01, the day after a court holiday, so possibly busier than usual).
-# Each floor is roughly 40% of that count - a first guess to retune from the log:
+# Each floor was roughly 40% of that count (2.7.0 first guesses, superseded by
+# the 2.7.1 floors above):
 #   Richmond Hill 36 -> 10  (855 Major Mackenzie Dr E; courtrooms A/B and video
 #                            settlement conferences, i.e. mostly Superior Court)
 #   Brampton   1,149 -> 500 ("--- All Below ---" = 7755 Hurontario, the main
@@ -172,14 +188,14 @@ COURT_OFFICE_VALUE = "Toronto"   # "--- All Below ---" = all 3 Toronto courthous
 #                            small enough that a quiet day may trip it)
 #   Oshawa       456 -> 200 (150 Bond St E, both courts)
 SEARCH_LOCATIONS = [
-    {"label": "Toronto", "city": "Toronto", "office": "Toronto", "min_rows_per_day": 1250},
+    {"label": "Toronto", "city": "Toronto", "office": "Toronto", "min_rows_per_day": 800},
     {"label": "Lindsay", "city": "Lindsay", "office": "K9V6G80", "min_rows_per_day": 15},
-    {"label": "Newmarket", "city": "Newmarket", "office": "L3Y6B10", "min_rows_per_day": 400},
+    {"label": "Newmarket", "city": "Newmarket", "office": "L3Y6B10", "min_rows_per_day": 200},
     {"label": "Richmond Hill", "city": "Richmond Hill", "office": "L4B4C60", "min_rows_per_day": 10},
-    {"label": "Brampton", "city": "Brampton", "office": "Brampton", "min_rows_per_day": 500},
-    {"label": "Milton", "city": "Milton", "office": "L9T1Y70", "min_rows_per_day": 150},
+    {"label": "Brampton", "city": "Brampton", "office": "Brampton", "min_rows_per_day": 400},
+    {"label": "Milton", "city": "Milton", "office": "L9T1Y70", "min_rows_per_day": 60},
     {"label": "Burlington", "city": "Burlington", "office": "L7R4M30", "min_rows_per_day": 5},
-    {"label": "Oshawa", "city": "Oshawa", "office": "L1G0A20", "min_rows_per_day": 200},
+    {"label": "Oshawa", "city": "Oshawa", "office": "L1G0A20", "min_rows_per_day": 150},
 ]
 
 # Fallback only. The real date for a scrape is read from the results page's own
