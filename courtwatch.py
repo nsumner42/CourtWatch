@@ -107,16 +107,21 @@ from bs4 import BeautifulSoup
 #   2.7.2 - floors lowered again for the Friday run, whose "tomorrow" is
 #           Monday: at 15:15 Friday, Monday's docket is only partly posted
 #           (Newmarket 188 rows on Fri 2026-10-02, 229 by Sun 2026-10-04).
-__version__ = "2.7.2"
+#   2.8.0 - no more "no matches" heartbeat email: healthchecks.io covers
+#           that. ALWAYS_SEND_EMAIL now gates only that email; failure emails
+#           always go out, and so does the "no court" notice on a holiday.
+__version__ = "2.8.0"
 
 # ============================== CONFIG ======================================
 
 SEARCH_TERM = "Your Name"   # placeholder - the real term comes from "search_term" in courtwatch_config.json; case-insensitive substring match against each result row
 
-# If True, send an email every run even when nothing new is found - useful as
+# If True, send a "no matches" email every run even when nothing new is found -
 # a "heartbeat" so you know the script is still running/reaching the site.
-# If False (default), you only get emailed when there's an actual new match.
-ALWAYS_SEND_EMAIL = True
+# If False (default), healthchecks.io is the heartbeat, and you are emailed only
+# for a new match, a scrape failure, or a "no court" day (holiday). Those three
+# are always emailed regardless of this setting.
+ALWAYS_SEND_EMAIL = False
 
 # Landing pages (the ones with the agree checkbox). Not daily-docket.aspx directly.
 DOCKET_URLS = {
@@ -1442,15 +1447,14 @@ def watch(term: str, force: bool = False):
                + (f"\n\n{closed_note}" if closed_note else ""))
         logger.error(msg)
         ping_healthcheck("fail", msg)
-        if ALWAYS_SEND_EMAIL:
-            send_email(f"CourtWatch: low/no rows from "
-                        f"{', '.join(sorted({d.split('/')[1].split(' on ')[0] for d in dead}))} "
-                        f"- check '{term}' manually", msg)
+        send_email(f"CourtWatch: low/no rows from "
+                    f"{', '.join(sorted({d.split('/')[1].split(' on ')[0] for d in dead}))} "
+                    f"- check '{term}' manually", msg)
         sys.exit(2)
 
     if not new_matches:
         logger.info(f"No new matches for '{term}' this run.")
-        if ALWAYS_SEND_EMAIL:
+        if ALWAYS_SEND_EMAIL or closed_note:
             body = (f"Checked today's and tomorrow's court lists for "
                      f"{', '.join(l['label'] for l in SEARCH_LOCATIONS)} "
                      f"({all_rows_seen_this_run} total rows scanned; "

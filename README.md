@@ -48,7 +48,8 @@ detected and named in the email instead of being reported as a failure.
 
 `courtwatch-run.ps1` is a wrapper for Task Scheduler. It runs `courtwatch.py --watch` and writes
 `last-run-status.txt`. Edit `$root` at the top if your folder isn't `C:\Scripts\CourtWatch`, then create a
-daily task (weekdays at 15:15 works well, since tomorrow's list is up by then) that runs:
+task that runs it Sunday to Friday (ours runs at 15:15 Israel time, about 8:15 AM in Toronto; the Sunday
+run gives Monday's list a second look after Friday's) and runs:
 
 ```
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Scripts\CourtWatch\courtwatch-run.ps1
@@ -58,8 +59,11 @@ On Linux or macOS, a cron entry running `python3 courtwatch.py --watch` does the
 
 ## What the emails mean
 
-- **"Court docket check: no matches for …"**: every run sends this as a heartbeat. If today or
-  tomorrow has no court (a holiday), the subject says so and names the holiday.
+- **No email** on a normal run with no match. Set up a healthchecks.io check (`healthcheck_url` in the
+  config) to know the script is still running; set `ALWAYS_SEND_EMAIL = True` in the script if you'd
+  rather get a "no matches" email every run.
+- **"Court docket check: no matches for …"**: sent when today or tomorrow has no court (a holiday). The
+  subject says so and names the holiday.
 - **A hearing alert** (subject like "Name Hearing (October 1st)"): the name was found. The email lists the
   docket row, the courtroom's Zoom link, and a calendar invite. The same row isn't alerted twice.
 - **"CourtWatch: low/no rows from …"**: a courthouse returned far fewer rows than normal. Either
