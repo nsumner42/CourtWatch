@@ -104,7 +104,10 @@ from bs4 import BeautifulSoup
 #           first Thursday/Friday pair, 2026-10-01/02). Friday dockets are
 #           much lighter: Milton's Friday was 146 rows (98 OCJ + 48 SCJ,
 #           verified complete), under its old floor of 150.
-__version__ = "2.7.1"
+#   2.7.2 - floors lowered again for the Friday run, whose "tomorrow" is
+#           Monday: at 15:15 Friday, Monday's docket is only partly posted
+#           (Newmarket 188 rows on Fri 2026-10-02, 229 by Sun 2026-10-04).
+__version__ = "2.7.2"
 
 # ============================== CONFIG ======================================
 
@@ -154,15 +157,17 @@ COURT_OFFICE_VALUE = "Toronto"   # "--- All Below ---" = all 3 Toronto courthous
 # is ~2,000-2,400 rows and a normal Lindsay day ~20-45, two orders of magnitude
 # apart.
 #
-# Since 2.7.1 the rule is: floor ~= 40% of the LOWEST day seen at that location.
-# A broken scrape shows up as 0 rows, or as one court (OCJ or SCJ) or one
-# courthouse dropping out, which is a much bigger fall than a quiet Friday.
-# Lowest days seen (Thu 2026-10-01 / Fri 2026-10-02 unless noted):
-#   Toronto 2,807 / 1,976 -> 800      Newmarket 731 / 452 -> 200
-#   Brampton 1,165 / 1,007 -> 400     Milton 339 / 146 -> 60
-#   Oshawa 477 / 383 -> 150           Richmond Hill 36 / 45 -> 10 (unchanged)
-#   Burlington 16 / 25 -> 5 (unchanged)
-#   Lindsay 15 is unchanged by the user's decision (Thu 256, Fri 79, but some
+# Since 2.7.1 the rule is: floor ~= 40% of the LOWEST count seen at that
+# location. A broken scrape shows up as 0 rows, or as one court (OCJ or SCJ) or
+# one courthouse dropping out, which is a much bigger fall than a quiet day.
+# The lowest counts come from the Friday run's "tomorrow" scrape, which is
+# Monday's docket seen three days early, before it is fully posted.
+# Counts: Thu 2026-10-01 / Fri 2026-10-02 / Mon 2026-10-05 as seen on Friday:
+#   Toronto 2,807 / 1,976 / 1,664 -> 650    Newmarket 731 / 452 / 188 -> 75
+#   Brampton 1,165 / 1,007 / 729 -> 300     Milton 339 / 146 / 215 -> 60
+#   Oshawa 477 / 383 / 332 -> 130           Richmond Hill 36 / 45 / 28 -> 10
+#   Burlington 16 / 25 / 67 -> 5
+#   Lindsay 15 is unchanged by the user's decision (256 / 79 / 50, but some
 #   September days were in the teens).
 #
 # Toronto (pre-2.7.1: 1250): comfortably under a normal day, so it trips only when a day is
@@ -188,14 +193,14 @@ COURT_OFFICE_VALUE = "Toronto"   # "--- All Below ---" = all 3 Toronto courthous
 #                            small enough that a quiet day may trip it)
 #   Oshawa       456 -> 200 (150 Bond St E, both courts)
 SEARCH_LOCATIONS = [
-    {"label": "Toronto", "city": "Toronto", "office": "Toronto", "min_rows_per_day": 800},
+    {"label": "Toronto", "city": "Toronto", "office": "Toronto", "min_rows_per_day": 650},
     {"label": "Lindsay", "city": "Lindsay", "office": "K9V6G80", "min_rows_per_day": 15},
-    {"label": "Newmarket", "city": "Newmarket", "office": "L3Y6B10", "min_rows_per_day": 200},
+    {"label": "Newmarket", "city": "Newmarket", "office": "L3Y6B10", "min_rows_per_day": 75},
     {"label": "Richmond Hill", "city": "Richmond Hill", "office": "L4B4C60", "min_rows_per_day": 10},
-    {"label": "Brampton", "city": "Brampton", "office": "Brampton", "min_rows_per_day": 400},
+    {"label": "Brampton", "city": "Brampton", "office": "Brampton", "min_rows_per_day": 300},
     {"label": "Milton", "city": "Milton", "office": "L9T1Y70", "min_rows_per_day": 60},
     {"label": "Burlington", "city": "Burlington", "office": "L7R4M30", "min_rows_per_day": 5},
-    {"label": "Oshawa", "city": "Oshawa", "office": "L1G0A20", "min_rows_per_day": 150},
+    {"label": "Oshawa", "city": "Oshawa", "office": "L1G0A20", "min_rows_per_day": 130},
 ]
 
 # Fallback only. The real date for a scrape is read from the results page's own
